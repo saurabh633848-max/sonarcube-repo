@@ -18,8 +18,9 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    // Fetch SonarScanner path from Jenkins tool configuration
-                    def scannerHome = tool 'mySonarScanner'
+
+                    // This must match Global Tool Configuration
+                    def scannerHome = tool 'MySonarQubeServer'
 
                     withSonarQubeEnv("${SONAR_SERVER}") {
                         sh """
