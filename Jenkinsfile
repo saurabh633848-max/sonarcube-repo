@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        // Must match Jenkins Global Tool Configuration name
-        sonarRunner 'mySonarScanner'
-    }
-
     environment {
         PROJECT_KEY = 'sonar-repo'
         SONAR_SERVER = 'SonarQube'
@@ -23,7 +18,9 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
+                    // Fetch SonarScanner path from Jenkins tool configuration
                     def scannerHome = tool 'mySonarScanner'
+
                     withSonarQubeEnv("${SONAR_SERVER}") {
                         sh """
                         ${scannerHome}/bin/sonar-scanner \
@@ -45,11 +42,11 @@ pipeline {
     post {
         success {
             echo "Pipeline completed successfully!"
-            echo "Check SonarQube report: http://52.66.205.81:9000/dashboard?id=sonar-repo"
+            echo "SonarQube Report: http://52.66.205.81:9000/dashboard?id=sonar-repo"
         }
 
         failure {
-            echo "Pipeline failed. Please check Jenkins logs."
+            echo "Pipeline failed. Check Jenkins logs."
         }
 
         always {
