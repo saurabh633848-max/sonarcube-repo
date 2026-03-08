@@ -2,7 +2,13 @@ pipeline {
     agent any
 
     tools {
-        sonarQube 'SonarScanner'  // Make sure this matches the name in Jenkins configuration
+        // Must match Jenkins Global Tool Configuration name
+        sonarQubeScanner 'mySonarScanner'
+    }
+
+    environment {
+        PROJECT_KEY = 'sonar-repo'
+        SONAR_SERVER = 'SonarQube'
     }
 
     stages {
@@ -10,20 +16,21 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/saurabh633848-max/sonarcube-repo.git'
+                url: 'https://github.com/saurabh633848-max/sonarcube-repo.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {  // Name of the SonarQube server in Jenkins
-                    sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=sonar-repo \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://52.66.205.81:9000 \
-                        -Dsonar.login=<your-token>
-                    """
+                script {
+                    def scannerHome = tool 'mySonarScanner'
+                    withSonarQubeEnv("${SONAR_SERVER}") {
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=${PROJECT_KEY} \
+                        -Dsonar.sources=.
+                        """
+                    }
                 }
             }
         }
@@ -33,12 +40,20 @@ pipeline {
                 sh 'rsync -av --delete ./ /var/www/html/'
             }
         }
-
     }
 
     post {
+        success {
+            echo "Pipeline completed successfully!"
+            echo "Check SonarQube report: http://52.66.205.81:9000/dashboard?id=sonar-repo"
+        }
+
+        failure {
+            echo "Pipeline failed. Please check Jenkins logs."
+        }
+
         always {
-            echo "SonarQube analysis complete. Check results here: http://52.66.205.81:9000/dashboard?id=sonar-repo"
+            echo "Pipeline execution finished."
         }
     }
 }
